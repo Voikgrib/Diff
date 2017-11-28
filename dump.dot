@@ -1,0 +1,16 @@
+digraph list {
+	node [shape = record];
+	node00036b60 [label = "cur_poz = 00036b60|{<f0> Parent = 00036b60 | <f1> 20.000000 |{<f2> left = 00000000 | <f3> right = 00000000 }}"];
+	node00036d40 [label = "cur_poz = 00036d40|{<f0> Parent = 00000000 | <f1> * |{<f2> left = 00036b60 | <f3> right = 00036b38 }}"];
+	node00036a70 [label = "cur_poz = 00036a70|{<f0> Parent = 00036a70 | <f1> x |{<f2> left = 00000000 | <f3> right = 00000000 }}"];
+	node00036b38 [label = "cur_poz = 00036b38|{<f0> Parent = 00036b38 | <f1> ^ |{<f2> left = 00036a70 | <f3> right = 00036e08 }}"];
+	node00036de0 [label = "cur_poz = 00036de0|{<f0> Parent = 00036de0 | <f1> 20.000000 |{<f2> left = 00000000 | <f3> right = 00000000 }}"];
+	node00036e08 [label = "cur_poz = 00036e08|{<f0> Parent = 00036e08 | <f1> - |{<f2> left = 00036de0 | <f3> right = 00036c00 }}"];
+	node00036c00 [label = "cur_poz = 00036c00|{<f0> Parent = 00036c00 | <f1> 1.000000 |{<f2> left = 00000000 | <f3> right = 00000000 }}"];
+	"node00036d40":f2 -> "node00036b60":f0;
+	"node00036d40":f3 -> "node00036b38":f0;
+	"node00036b38":f2 -> "node00036a70":f0;
+	"node00036b38":f3 -> "node00036e08":f0;
+	"node00036e08":f2 -> "node00036de0":f0;
+	"node00036e08":f3 -> "node00036c00":f0;
+}
