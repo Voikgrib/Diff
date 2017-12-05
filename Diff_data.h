@@ -45,6 +45,10 @@ OPERATION( 'k' , "ctg")
 #define DIV( left , right )              create_node(T_operator, '/', left, right)
 #define SUB( left , right )              create_node(T_operator, '-', left, right)
 #define POV( left , right )              create_node(T_operator, '^', left, right)
+#define SIN( num )                       create_node(T_operator, 's', num, NULL)
+#define COS( num )                       create_node(T_operator, 'c', num, NULL)
+#define TG( num )                        create_node(T_operator, 't', num, NULL)
+#define CTG( num )                       create_node(T_operator, 'k', num, NULL)
 
 #define dL                               differ(what->left_point)
 #define dR                               differ(what->right_point)
@@ -62,8 +66,12 @@ IS_OP
     TYPE('+') return PLUS(dL, dR);
     TYPE('-') return SUB(dL, dR);
     TYPE('*') return PLUS(MUL (dL, R), MUL(L, dR));
-    TYPE('/') return DIV(SUB(MUL(dL, R), MUL(L, dR)), MUL(R , R));
+    TYPE('/') { NUM_CR(num_0) = NUM(2); return DIV(SUB(MUL(dL, R), MUL(L, dR)), POV(R, brunch_copy(num_0)));}
     TYPE('^') { NUM_CR(num_1) = NUM(1); return MUL(R, POV(L, SUB(R, brunch_copy(num_1))));}
+    TYPE('s') return COS( L );
+    TYPE('c') { NUM_CR(num_2) = NUM(-1); return MUL(brunch_copy(num_2), L );}
+    TYPE('t') { NUM_CR(num_3) = NUM(2); NUM_CR(num_4) = NUM(1); return DIV( brunch_copy(num_4), POV( COS(L), brunch_copy(num_3))) ;}
+    TYPE('k') { NUM_CR(num_5) = NUM(2); NUM_CR(num_6) = NUM(-1); return DIV( brunch_copy(num_6), POV( SIN(L), brunch_copy(num_5)));}
 
 }
 

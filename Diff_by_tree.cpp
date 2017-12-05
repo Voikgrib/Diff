@@ -57,10 +57,15 @@ void tree_dump(struct diff_tree_brunch *start_point);
 void node_dump_gen(struct diff_tree_brunch *cur_point, FILE *dump);
 void arrows_dump_gen(struct diff_tree_brunch *cur_point, FILE *dump);
 
-void empty_fnction(struct diff_tree_brunch *not_matter);
+void optim_main(struct diff_tree_brunch *cur_point);
+int optim_const(struct diff_tree_brunch *cur_point);
+double const_calc(struct diff_tree_brunch *cur_point);
+int optim_simple(struct diff_tree_brunch *cur_point);
+void lexa_fnction(struct diff_tree_brunch *not_matter);
 
 void usr_interface(void);
 void freesher(struct diff_tree_brunch *start_point);
+void printer(struct diff_tree_brunch *cur_point);
 
 //!---------------------------------------------------------------------------------------------------
 //!
@@ -78,10 +83,13 @@ struct diff_tree_brunch
 
 //!---------------------------------------------------------------------------------------------------
 //!
-//! This program find diff                          v - 0.2
+//! This program find diff                          v - 1.2
 //!
 //! UPD (v 0.0.1) - I print main, it was hard... (Asserts also, because it's in my heart)
 //! UPD (v 0.2) - Reader wrote, but not tested c:
+//! UPD (v 1.0) - work with - + * / ^ sin cos tg ctg
+//! UPD (v 1.2) - constant optimizer worked now
+//! UPD (v 1.2.1) - all optimizer worked now
 //!
 //! Author: Vladimir Gribanov
 //!
@@ -102,11 +110,15 @@ void usr_interface (void)
 {
     struct diff_tree_brunch *start_pre_diff_brunch = pre_reader();
 
-    tree_dump(start_pre_diff_brunch);
-
     struct diff_tree_brunch *diff_tree_start_point = differ(start_pre_diff_brunch);
 
     tree_dump(diff_tree_start_point);
+
+    optim_main(diff_tree_start_point);
+
+    tree_dump(diff_tree_start_point);
+
+    printer(diff_tree_start_point);
 
     freesher(start_pre_diff_brunch);
     freesher(diff_tree_start_point);
@@ -286,11 +298,11 @@ int is_brunch_ok(struct diff_tree_brunch *cur_point)
 
 //!----------------------------------------------------------------
 //!
+//! This function get file size
 //!
+//! @param[in] FILE *text - current file
 //!
-//! @param[in] FILE *text -
-//!
-//! @param[out] size_of_text -
+//! @param[out] size_of_text - size of file
 //!
 //!----------------------------------------------------------------
 long int get_file_size(FILE *text)
@@ -377,7 +389,9 @@ void arrows_dump_gen(struct diff_tree_brunch *cur_point, FILE *dump)
 
 //!---------------------------------------------------------------------------------------------------
 //!
+//! This function copy tree brunch in new tree
 //!
+//! @param[in] struct diff_tree_brunch *what - what brunch we copy
 //!
 //!---------------------------------------------------------------------------------------------------
 struct diff_tree_brunch *brunch_copy(struct diff_tree_brunch *what)
@@ -414,13 +428,11 @@ int rec_brunch_viewer(struct diff_tree_brunch *cur_brunch)
 {
     int i_found = 0;
 
-    if(cur_brunch->left_point != NULL && i_found == 0)
-        i_found = rec_brunch_viewer(cur_brunch->left_point);
-
-
     if(cur_brunch->type_of_data == T_symbol)
         i_found = 1;
 
+    if(cur_brunch->left_point != NULL && i_found == 0)
+        i_found = rec_brunch_viewer(cur_brunch->left_point);
 
     if(cur_brunch->right_point != NULL && i_found == 0)
         i_found = rec_brunch_viewer(cur_brunch->right_point);
@@ -440,9 +452,14 @@ struct diff_tree_brunch *create_node(int type, double val, struct diff_tree_brun
     if(type == T_operator)
     {
         new_node->left_point = fun_left;
-        new_node->right_point = fun_right;
-        new_node->left_point->parent_pointer = new_node->left_point;
-        new_node->right_point->parent_pointer = new_node->right_point;
+
+        if(fun_right != NULL)
+            new_node->right_point = fun_right;
+        else
+            new_node->right_point = fun_left;
+
+        new_node->left_point->parent_pointer = new_node;
+        new_node->right_point->parent_pointer = new_node;
 
         new_node->type_of_data = T_operator;
         new_node->value = val;
@@ -465,7 +482,9 @@ struct diff_tree_brunch *create_node(int type, double val, struct diff_tree_brun
 
 //!---------------------------------------------------------------------------------------------------
 //!
+//! This function diff tree brunch in new tree
 //!
+//! @param[in] struct diff_tree_brunch *what - what brunch we diff
 //!
 //!---------------------------------------------------------------------------------------------------
 struct diff_tree_brunch *differ(struct diff_tree_brunch *what)
@@ -478,17 +497,194 @@ struct diff_tree_brunch *differ(struct diff_tree_brunch *what)
 
 //!---------------------------------------------------------------------------------------------------
 //!
-//! It's like me! Do nothing :D
+//!
 //!
 //!---------------------------------------------------------------------------------------------------
-void empty_fnction(struct diff_tree_brunch *not_matter)
+void optim_main(struct diff_tree_brunch *cur_point)
+{
+    const int yes = 1;
+    const int no = 0;
+
+    int is_end = 0;
+
+    while(is_end != yes)
+    {
+        is_end = yes;
+
+        is_end = optim_const(cur_point);
+
+        if(cur_point->type_of_data == T_operator)
+        {
+            if(is_end == no)
+                optim_simple(cur_point);
+            else
+                is_end = optim_simple(cur_point);
+        }
+    }
+}
+
+//!---------------------------------------------------------------------------------------------------
+//!
+//!
+//!
+//!---------------------------------------------------------------------------------------------------
+int optim_const(struct diff_tree_brunch *cur_point)
+{
+    int left = -1;
+    int right = -1;
+    int is_change = 0;
+
+    if(cur_point->left_point != NULL && cur_point->right_point != NULL)
+    {
+        left = rec_brunch_viewer(cur_point->left_point);
+        right = rec_brunch_viewer(cur_point->right_point);
+    }
+
+    double val = 0;
+
+    if(left == 1 && cur_point->left_point != NULL && cur_point->right_point != NULL)
+    {
+        is_change = optim_const(cur_point->left_point);
+    }
+    else if(left == 0 && cur_point->left_point != NULL && cur_point->right_point != NULL)
+    {
+        val = const_calc(cur_point->left_point);
+        cur_point->left_point = create_node(T_value, val, NULL, NULL);
+        is_change = 1;
+    }
+
+    if(right == 1 && cur_point->left_point != NULL && cur_point->right_point != NULL)
+    {
+        is_change = optim_const(cur_point->right_point);
+    }
+    else if(right == 0 && cur_point->left_point != NULL && cur_point->right_point != NULL)
+    {
+        val = const_calc(cur_point->right_point);
+        cur_point->right_point = create_node(T_value, val, NULL, NULL);
+        is_change = 1;
+    }
+
+    return is_change;
+}
+
+//!---------------------------------------------------------------------------------------------------
+//!
+//!
+//!
+//!---------------------------------------------------------------------------------------------------
+double const_calc(struct diff_tree_brunch *cur_point)
+{
+    double val_1 = 0;
+    double val_2 = 0;
+    double cur_op = 0;
+
+    if(cur_point->type_of_data == T_operator)
+    {
+        val_1 = const_calc(cur_point->left_point);
+        val_2 = const_calc(cur_point->right_point);
+        cur_op = cur_point->value;
+
+        free(cur_point);
+
+        if(cur_op == '+')
+            return val_1 + val_2;
+        else if(cur_op == '-')
+            return val_1 - val_2;
+        else if(cur_op == '*')
+            return val_1 * val_2;
+        else if(cur_op == '/')
+            return val_1 / val_2;
+
+    }
+    else
+    {
+        val_1 = cur_point->value;
+        free(cur_point);
+        return val_1;
+    }
+}
+
+//!---------------------------------------------------------------------------------------------------
+//!
+//!
+//!
+//!---------------------------------------------------------------------------------------------------
+int optim_simple(struct diff_tree_brunch *cur_point)
+{
+    struct diff_tree_brunch *old_point = 0;
+    int is_change = 0;
+
+    if(cur_point->type_of_data == T_operator)
+
+    if(cur_point->value == '*' && (
+      (cur_point->left_point->type_of_data == T_value && cur_point->left_point->value == 0) ||
+      (cur_point->right_point->type_of_data == T_value && cur_point->right_point->value == 0)))
+    {
+        freesher(cur_point->right_point);
+        freesher(cur_point->left_point);
+        cur_point->left_point = NULL;
+        cur_point->right_point = NULL;
+        cur_point->type_of_data = T_value;
+        cur_point->value = 0;
+    }
+    else if(cur_point->value == '*' && cur_point->left_point->type_of_data == T_value && cur_point->left_point->value == 1)
+    {
+        old_point = cur_point;
+        cur_point = old_point->right_point;
+        cur_point->parent_pointer = old_point->parent_pointer;
+        free(old_point);
+    }
+    else if(cur_point->value == '*' && cur_point->right_point->type_of_data == T_value && cur_point->right_point->value == 1)
+    {
+        old_point = cur_point;
+        cur_point = old_point->left_point;
+        cur_point->parent_pointer = old_point->parent_pointer;
+        free(old_point);
+    }
+    else if(cur_point->value == '+' && cur_point->left_point->type_of_data == T_value && cur_point->left_point->value == 0)
+    {
+        old_point = cur_point;
+        cur_point = old_point->right_point;
+        cur_point->parent_pointer = old_point->parent_pointer;
+        free(old_point);
+    }
+    else if((cur_point->value == '+' || cur_point->value == '-') && cur_point->right_point->type_of_data == T_value && cur_point->right_point->value == 0)
+    {
+        old_point = cur_point;
+        cur_point = old_point->left_point;
+        cur_point->parent_pointer = old_point->parent_pointer;
+        free(old_point);
+    }
+    else
+        is_change = 1;
+
+    if(cur_point->left_point != NULL && cur_point->right_point != NULL)
+    {
+        if(cur_point->left_point->type_of_data == T_operator)
+            is_change = optim_simple(cur_point->left_point);
+
+        if(cur_point->right_point->type_of_data == T_operator)
+            is_change = optim_simple(cur_point->right_point);
+    }
+
+    return is_change;
+}
+
+//!---------------------------------------------------------------------------------------------------
+//!
+//! It's like Lexa! Do nothing :D
+//!
+//!---------------------------------------------------------------------------------------------------
+void lexa_fnction(struct diff_tree_brunch *not_matter)
 {
     return;
 }
 
 //!------------------------------------------------------------------------------
 //!
-//! Why
+//! This function free tree from current point
+//!
+//! @param[in] struct diff_tree_brunch *cur_point - current point
 //!
 //!------------------------------------------------------------------------------
 void freesher(struct diff_tree_brunch *cur_point)
@@ -502,5 +698,30 @@ void freesher(struct diff_tree_brunch *cur_point)
     free(cur_point);
 }
 
+//!---------------------------------------------------------------------------------------------------
+//!
+//!
+//!
+//!---------------------------------------------------------------------------------------------------
+void printer(struct diff_tree_brunch *cur_point)
+{
+    if(cur_point->type_of_data == T_operator)
+        printf("(");
+
+    if(cur_point->left_point != NULL)
+        printer(cur_point->left_point);
+
+    if(cur_point->type_of_data != T_value)
+        printf(" %c ", (int)cur_point->value);
+    else
+        printf("%f", cur_point->value);
+
+
+    if(cur_point->right_point != NULL)
+        printer(cur_point->right_point);
+
+    if(cur_point->type_of_data == T_operator)
+        printf(")");
+}
 
 
