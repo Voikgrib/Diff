@@ -112,8 +112,6 @@ void usr_interface (void)
 
     struct diff_tree_brunch *diff_tree_start_point = differ(start_pre_diff_brunch);
 
-    tree_dump(diff_tree_start_point);
-
     optim_main(diff_tree_start_point);
 
     tree_dump(diff_tree_start_point);
