@@ -2,8 +2,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
-#include<conio.h>
-#include<windows.h>
+#include<math.h>
 #include"my_lib.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ START OF DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,10 +65,12 @@ void lexa_fnction(struct diff_tree_brunch *not_matter);
 void usr_interface(void);
 void freesher(struct diff_tree_brunch *start_point);
 void printer(struct diff_tree_brunch *cur_point);
+void tex_maker(struct diff_tree_brunch *start_point);
+void rec_texatel(struct diff_tree_brunch *cur_point, FILE *tex_file);
 
 //!---------------------------------------------------------------------------------------------------
 //!
-//!
+//! This structure contains diff tree brunch information
 //!
 //!---------------------------------------------------------------------------------------------------
 struct diff_tree_brunch
@@ -89,7 +90,7 @@ struct diff_tree_brunch
 //! UPD (v 0.2) - Reader wrote, but not tested c:
 //! UPD (v 1.0) - work with - + * / ^ sin cos tg ctg
 //! UPD (v 1.2) - constant optimizer worked now
-//! UPD (v 1.2.1) - all optimizer worked now
+//! UPD (v 1.2.1) - all optimizer worked now    						!!!!! BUGS WITH SIN COS TG CTG !!!!!
 //!
 //! Author: Vladimir Gribanov
 //!
@@ -103,7 +104,7 @@ int main()
 
 //!---------------------------------------------------------------------------------------------------
 //!
-//!
+//! This is diff main interfase
 //!
 //!---------------------------------------------------------------------------------------------------
 void usr_interface (void)
@@ -116,7 +117,11 @@ void usr_interface (void)
 
     tree_dump(diff_tree_start_point);
 
-    printer(diff_tree_start_point);
+    //printer(diff_tree_start_point);
+
+	tex_maker(diff_tree_start_point);
+
+	printf("\n");
 
     freesher(start_pre_diff_brunch);
     freesher(diff_tree_start_point);
@@ -124,7 +129,13 @@ void usr_interface (void)
 
 //!---------------------------------------------------------------------------------------------------
 //!
+//! This function create part for tree
 //!
+//! @param[in] struct diff_tree_brunch *parent - parent pointer
+//! @param[in] double val_of_cur_brunch - curent value
+//! @paran[in] int d_type - type of data 
+//!
+//! @return 	pointer on created part
 //!
 //!---------------------------------------------------------------------------------------------------
 struct diff_tree_brunch *part_creator(struct diff_tree_brunch *parent, double val_of_cur_brunch, int d_type)
@@ -154,7 +165,9 @@ struct diff_tree_brunch *part_creator(struct diff_tree_brunch *parent, double va
 
 //!---------------------------------------------------------------------------------------------------
 //!
+//! This function read file with undiff information
 //!
+//! @return 	pointer ot tree start
 //!
 //!---------------------------------------------------------------------------------------------------
 struct diff_tree_brunch *pre_reader(void)
@@ -180,7 +193,7 @@ struct diff_tree_brunch *pre_reader(void)
 
 //!---------------------------------------------------------------------------------------------------
 //!
-//!
+//! This function recusive read 
 //!
 //!---------------------------------------------------------------------------------------------------
 struct diff_tree_brunch *rec_reader(struct diff_tree_brunch *cur_point, char *buff)
@@ -254,7 +267,7 @@ struct diff_tree_brunch *rec_reader(struct diff_tree_brunch *cur_point, char *bu
         }
         else
         {
-            printf(" Err_print \\ val = %d \\ type = %d \\ \n", cur_point->value, cur_point->type_of_data);
+            printf(" Err_print \\ val = %g \\ type = %d \\ \n", cur_point->value, cur_point->type_of_data);
             printf(" It's strange... \n");
         }
 
@@ -277,7 +290,7 @@ struct diff_tree_brunch *rec_reader(struct diff_tree_brunch *cur_point, char *bu
 
 //!---------------------------------------------------------------------------------------------------
 //!
-//!
+//! Control memory
 //!
 //!---------------------------------------------------------------------------------------------------
 int is_brunch_ok(struct diff_tree_brunch *cur_point)
@@ -336,7 +349,7 @@ void tree_dump(struct diff_tree_brunch *start_point)
 
     fclose(dump);
 
-    system("C:\\Users\\bqbq4\\OneDrive\\Документы\\Проги\\release\\bin\\dotty.exe dump.dot");
+    system("dot -Tpng dump.dot > dumpy.png"); 
 }
 
 
@@ -419,7 +432,9 @@ struct diff_tree_brunch *brunch_copy(struct diff_tree_brunch *what)
 
 //!---------------------------------------------------------------------------------------------------
 //!
+//! This function find bruches with constants and solve it (only for + - * /)
 //!
+//! @param[in] struct diff_tree_brunch *cur_brunch - brunch which we working on
 //!
 //!---------------------------------------------------------------------------------------------------
 int rec_brunch_viewer(struct diff_tree_brunch *cur_brunch)
@@ -428,6 +443,9 @@ int rec_brunch_viewer(struct diff_tree_brunch *cur_brunch)
 
     if(cur_brunch->type_of_data == T_symbol)
         i_found = 1;
+
+	if(cur_brunch->type_of_data == T_operator && (cur_brunch->value == 's' || cur_brunch->value == 'c' || cur_brunch->value == 't' || cur_brunch->value == 'k' || cur_brunch->value == '^'))
+		i_found = 1;
 
     if(cur_brunch->left_point != NULL && i_found == 0)
         i_found = rec_brunch_viewer(cur_brunch->left_point);
@@ -495,7 +513,7 @@ struct diff_tree_brunch *differ(struct diff_tree_brunch *what)
 
 //!---------------------------------------------------------------------------------------------------
 //!
-//!
+//! Contains optimization for diff tree
 //!
 //!---------------------------------------------------------------------------------------------------
 void optim_main(struct diff_tree_brunch *cur_point)
@@ -518,6 +536,11 @@ void optim_main(struct diff_tree_brunch *cur_point)
             else
                 is_end = optim_simple(cur_point);
         }
+        
+        //printf("!\n");
+
+		if(is_end == yes)
+			optim_const(cur_point);
     }
 }
 
@@ -629,27 +652,54 @@ int optim_simple(struct diff_tree_brunch *cur_point)
     {
         old_point = cur_point;
         cur_point = old_point->right_point;
+        
+        if(old_point->parent_pointer->right_point == old_point)
+        	old_point->parent_pointer->right_point = cur_point;
+        else if(old_point->parent_pointer->left_point == old_point)
+        	old_point->parent_pointer->left_point = cur_point;
+        	
         cur_point->parent_pointer = old_point->parent_pointer;
+        
         free(old_point);
     }
     else if(cur_point->value == '*' && cur_point->right_point->type_of_data == T_value && cur_point->right_point->value == 1)
     {
         old_point = cur_point;
         cur_point = old_point->left_point;
+        
+        if(old_point->parent_pointer->right_point == old_point)
+        	old_point->parent_pointer->right_point = cur_point;
+        else if(old_point->parent_pointer->left_point == old_point)
+        	old_point->parent_pointer->left_point = cur_point;
+        
         cur_point->parent_pointer = old_point->parent_pointer;
+     
         free(old_point);
     }
     else if(cur_point->value == '+' && cur_point->left_point->type_of_data == T_value && cur_point->left_point->value == 0)
     {
         old_point = cur_point;
         cur_point = old_point->right_point;
+        
+        if(old_point->parent_pointer->right_point == old_point)
+        	old_point->parent_pointer->right_point = cur_point;
+        else if(old_point->parent_pointer->left_point == old_point)
+        	old_point->parent_pointer->left_point = cur_point;
+        
         cur_point->parent_pointer = old_point->parent_pointer;
+        
         free(old_point);
     }
     else if((cur_point->value == '+' || cur_point->value == '-') && cur_point->right_point->type_of_data == T_value && cur_point->right_point->value == 0)
     {
         old_point = cur_point;
         cur_point = old_point->left_point;
+        
+        if(old_point->parent_pointer->right_point == old_point)
+        	old_point->parent_pointer->right_point = cur_point;
+        else if(old_point->parent_pointer->left_point == old_point)
+        	old_point->parent_pointer->left_point = cur_point;
+        
         cur_point->parent_pointer = old_point->parent_pointer;
         free(old_point);
     }
@@ -696,6 +746,14 @@ void freesher(struct diff_tree_brunch *cur_point)
     free(cur_point);
 }
 
+#undef OPERATION
+
+#define OPERATION( num_of_op , str_of_op )                                                                                      \
+                                                if(cur_point->value == num_of_op)        	                                    \
+                                                {            																	\
+													printf(" "str_of_op" ");        	                                		\
+                                                }
+
 //!---------------------------------------------------------------------------------------------------
 //!
 //!
@@ -709,11 +767,19 @@ void printer(struct diff_tree_brunch *cur_point)
     if(cur_point->left_point != NULL)
         printer(cur_point->left_point);
 
-    if(cur_point->type_of_data != T_value)
-        printf(" %c ", (int)cur_point->value);
-    else
-        printf("%f", cur_point->value);
-
+    if(cur_point->type_of_data == T_operator)
+	{
+		#define NEED_OPERATION
+		#include"Diff_data.h"
+		//printf("oper");
+        //printf(" %c ", (int)cur_point->value);
+	}
+    else if(cur_point->type_of_data == T_value)
+	{
+        printf("%lg", cur_point->value);
+	}
+	else
+		printf("x");
 
     if(cur_point->right_point != NULL)
         printer(cur_point->right_point);
@@ -721,5 +787,89 @@ void printer(struct diff_tree_brunch *cur_point)
     if(cur_point->type_of_data == T_operator)
         printf(")");
 }
+
+
+void tex_maker(struct diff_tree_brunch *start_point)
+{
+	FILE *tex_file = fopen("tex_dump.tex","w");
+
+	fprintf(tex_file, "\\documentclass[14pt]{scrartcl}\n\\begin{document}\n\\begin{equation}\n");
+	
+	rec_texatel(start_point, tex_file);	
+
+	fprintf(tex_file, "\\end{equation}\n\\end{document}\n");
+
+	fclose(tex_file);
+}
+
+
+void rec_texatel(struct diff_tree_brunch *cur_point, FILE *tex_file)
+{
+	double val = cur_point->value;
+
+	if(cur_point->type_of_data == T_operator && val == '/')
+		{
+		fprintf(tex_file, "\\frac{");
+		rec_texatel(cur_point->left_point, tex_file);
+		fprintf(tex_file, "}{");
+		rec_texatel(cur_point->right_point, tex_file);
+		fprintf(tex_file, "}\n");
+		return;
+		}
+
+	//if(cur_point->left_point != NULL)
+	//	{
+	//		rec_texatel(cur_point->left_point, tex_file);
+	//	}	
+
+	
+	if(cur_point->type_of_data == T_operator)
+	{
+		if(val == '+' || val == '-' || val == '^' || val == '*')
+		{
+			rec_texatel(cur_point->left_point, tex_file);
+			fprintf(tex_file, "%c", (int)val);
+			rec_texatel(cur_point->right_point, tex_file);
+		}
+		else if(val == 's')
+		{
+			fprintf(tex_file, "\\sin{");
+			rec_texatel(cur_point->left_point, tex_file);
+			fprintf(tex_file, "}\n");
+		} 
+		else if(val == 'c')
+		{
+			fprintf(tex_file, "\\cos{");
+			rec_texatel(cur_point->left_point, tex_file);
+			fprintf(tex_file, "}\n");
+		}
+		else if(val == 't')
+		{
+			fprintf(tex_file, "\\tan{");
+			rec_texatel(cur_point->left_point, tex_file);
+			fprintf(tex_file, "}\n");
+		}
+		else if(val == 'k')
+		{
+			fprintf(tex_file, "\\coth{");
+			rec_texatel(cur_point->left_point, tex_file);
+			fprintf(tex_file, "}\n");
+		}
+	}
+	else if(cur_point->type_of_data == T_value)
+	{
+		fprintf(tex_file, "%lg", val);
+	}
+	else if(cur_point->type_of_data == T_symbol)
+	{
+		fprintf(tex_file, "%c", (int)val);
+	}
+	
+	return;
+}
+
+
+
+
 
 

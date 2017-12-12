@@ -1,8 +1,24 @@
 digraph list {
 	node [shape = record];
-	node026a6178 [label = "cur_poz = 026a6178|{<f0> Parent = 00000000 | <f1> 1.000000 |{<f2> left = 00000000 | <f3> right = 00000000 }}"];
-	node026a6150 [label = "cur_poz = 026a6150|{<f0> Parent = 00000000 | <f1> + |{<f2> left = 026a6178 | <f3> right = 026a5fc0 }}"];
-	node026a5fc0 [label = "cur_poz = 026a5fc0|{<f0> Parent = 00000000 | <f1> 6.000000 |{<f2> left = 00000000 | <f3> right = 00000000 }}"];
-	"node026a6150":f2 -> "node026a6178":f0;
-	"node026a6150":f3 -> "node026a5fc0":f0;
+	node0x12b4ee0 [label = "cur_poz = 0x12b4ee0|{<f0> Parent = 0x12b4f10 | <f1> x |{<f2> left = (nil) | <f3> right = (nil) }}"];
+	node0x12b4f10 [label = "cur_poz = 0x12b4f10|{<f0> Parent = 0x12b4f40 | <f1> c |{<f2> left = 0x12b4ee0 | <f3> right = 0x12b4ee0 }}"];
+	node0x12b4ee0 [label = "cur_poz = 0x12b4ee0|{<f0> Parent = 0x12b4f10 | <f1> x |{<f2> left = (nil) | <f3> right = (nil) }}"];
+	node0x12b4f40 [label = "cur_poz = 0x12b4f40|{<f0> Parent = 0x12b4f70 | <f1> * |{<f2> left = 0x12b4f10 | <f3> right = 0x12b4e80 }}"];
+	node0x12b4e80 [label = "cur_poz = 0x12b4e80|{<f0> Parent = (nil) | <f1> 2.000000 |{<f2> left = (nil) | <f3> right = (nil) }}"];
+	node0x12b4f70 [label = "cur_poz = 0x12b4f70|{<f0> Parent = 0x12b4fa0 | <f1> - |{<f2> left = 0x12b4f40 | <f3> right = 0x12b4e00 }}"];
+	node0x12b4e00 [label = "cur_poz = 0x12b4e00|{<f0> Parent = (nil) | <f1> 0.000000 |{<f2> left = (nil) | <f3> right = (nil) }}"];
+	node0x12b4fa0 [label = "cur_poz = 0x12b4fa0|{<f0> Parent = (nil) | <f1> / |{<f2> left = 0x12b4f70 | <f3> right = 0x12b4ce0 }}"];
+	node0x12b4cb0 [label = "cur_poz = 0x12b4cb0|{<f0> Parent = (nil) | <f1> 2.000000 |{<f2> left = (nil) | <f3> right = (nil) }}"];
+	node0x12b4ce0 [label = "cur_poz = 0x12b4ce0|{<f0> Parent = 0x12b4fa0 | <f1> ^ |{<f2> left = 0x12b4cb0 | <f3> right = 0x12b4c80 }}"];
+	node0x12b4c80 [label = "cur_poz = 0x12b4c80|{<f0> Parent = (nil) | <f1> 2.000000 |{<f2> left = (nil) | <f3> right = (nil) }}"];
+	"node0x12b4f10":f2 -> "node0x12b4ee0":f0;
+	"node0x12b4f10":f3 -> "node0x12b4ee0":f0;
+	"node0x12b4f40":f2 -> "node0x12b4f10":f0;
+	"node0x12b4f40":f3 -> "node0x12b4e80":f0;
+	"node0x12b4f70":f2 -> "node0x12b4f40":f0;
+	"node0x12b4f70":f3 -> "node0x12b4e00":f0;
+	"node0x12b4fa0":f2 -> "node0x12b4f70":f0;
+	"node0x12b4fa0":f3 -> "node0x12b4ce0":f0;
+	"node0x12b4ce0":f2 -> "node0x12b4cb0":f0;
+	"node0x12b4ce0":f3 -> "node0x12b4c80":f0;
 }
